@@ -9,7 +9,7 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3000;
 
-connectDB();
+connectDB().then(() => console.log('connected db')).catch((err) => console.error('DB connection error:', err));
 
 app.use(express.json());
 app.use(cors());
