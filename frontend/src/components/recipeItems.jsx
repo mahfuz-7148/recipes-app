@@ -79,26 +79,8 @@ export const RecipeItems = () => {
                     <Clock className="w-4 h-4 text-orange-500" />
                     <span className="text-sm font-medium">{item.time}</span>
                   </div>
-
-                  {item.difficulty && (
-                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                      item.difficulty === 'Easy'
-                        ? 'bg-green-100 text-green-700'
-                        : item.difficulty === 'Medium'
-                          ? 'bg-yellow-100 text-yellow-700'
-                          : 'bg-red-100 text-red-700'
-                    }`}>
-                      {item.difficulty}
-                    </span>
-                  )}
                 </div>
 
-                {/* Description */}
-                {item.description && (
-                  <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                    {item.description}
-                  </p>
-                )}
 
                 {/* Action Buttons */}
                 <div className="flex items-center justify-between pt-4 border-t border-gray-100">
