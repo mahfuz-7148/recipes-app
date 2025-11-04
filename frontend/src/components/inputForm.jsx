@@ -1,79 +1,9 @@
-import React, { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { FaEnvelope, FaLock, FaTimes, FaEye, FaEyeSlash, FaUser } from 'react-icons/fa'
+import {AnimatePresence, motion} from 'framer-motion';
+import {FaEnvelope, FaEye, FaEyeSlash, FaLock, FaUser} from 'react-icons/fa';
+import {useState} from 'react';
+import { useLocalStorage } from 'react-use';
+import axios from 'axios';
 
-// Modal Component
-export const Modal = ({ children, onClose }) => {
-  const backdropVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1 }
-  }
-
-  const modalVariants = {
-    hidden: {
-      opacity: 0,
-      scale: 0.8,
-      y: -50
-    },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      y: 0,
-      transition: {
-        type: "spring",
-        stiffness: 300,
-        damping: 25
-      }
-    },
-    exit: {
-      opacity: 0,
-      scale: 0.8,
-      y: 50,
-      transition: {
-        duration: 0.2
-      }
-    }
-  }
-
-  return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        {/* Backdrop */}
-        <motion.div
-          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-          onClick={onClose}
-          variants={backdropVariants}
-          initial="hidden"
-          animate="visible"
-          exit="hidden"
-        />
-
-        {/* Modal Content */}
-        <motion.div
-          className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 z-10 max-h-[90vh] overflow-y-auto"
-          variants={modalVariants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-        >
-          {/* Close Button */}
-          <motion.button
-            onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-            whileHover={{ scale: 1.1, rotate: 90 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            <FaTimes size={24} />
-          </motion.button>
-
-          {children}
-        </motion.div>
-      </div>
-    </AnimatePresence>
-  )
-}
-
-// InputForm Component
 export const InputForm = ({ setIsOpen }) => {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
@@ -83,11 +13,31 @@ export const InputForm = ({ setIsOpen }) => {
   const [focusedField, setFocusedField] = useState(null)
   const [showPassword, setShowPassword] = useState(false)
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    // Add your authentication logic here
-    console.log({ name, email, password, isSignUp })
-  }
+
+  const [token, setToken] = useLocalStorage('token', null);
+  const [user, setUser] = useLocalStorage('user', null);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const endpoint = isSignUp ? "signUp" : "login";
+
+      const response = await axios.post(`http://localhost:5000/${endpoint}`, {
+        ...(isSignUp && { name }),
+        email,
+        password
+      });
+
+      setToken(response.data.token);
+      setUser(response.data.user);
+
+      setIsOpen(false);
+
+    } catch (err) {
+      setError(err.response?.data?.error || "Something went wrong");
+    }
+  };
 
   const formVariants = {
     hidden: { opacity: 0 },
@@ -131,7 +81,6 @@ export const InputForm = ({ setIsOpen }) => {
         </p>
       </motion.div>
 
-      {/* Name Field (Only for Sign Up) */}
       <AnimatePresence>
         {isSignUp && (
           <motion.div
