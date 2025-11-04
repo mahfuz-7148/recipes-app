@@ -1,10 +1,9 @@
 import {AnimatePresence, motion} from 'framer-motion';
 import {FaEnvelope, FaEye, FaEyeSlash, FaLock, FaUser} from 'react-icons/fa';
 import {useState} from 'react';
-import { useLocalStorage } from 'react-use';
 import axios from 'axios';
 
-export const InputForm = ({ setIsOpen }) => {
+export const InputForm = ({ setIsOpen, setToken, setUser }) => {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -12,10 +11,6 @@ export const InputForm = ({ setIsOpen }) => {
   const [error, setError] = useState("")
   const [focusedField, setFocusedField] = useState(null)
   const [showPassword, setShowPassword] = useState(false)
-
-
-  const [token, setToken] = useLocalStorage('token', null);
-  const [user, setUser] = useLocalStorage('user', null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,6 +24,7 @@ export const InputForm = ({ setIsOpen }) => {
         password
       });
 
+      // Update both localStorage and state immediately
       setToken(response.data.token);
       setUser(response.data.user);
 
