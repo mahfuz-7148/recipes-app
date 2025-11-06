@@ -14,6 +14,7 @@ connectDB().then(() => console.log('connected db')).catch((err) => console.error
 
 app.use(express.json());
 app.use(cors());
+app.use(express.static('public'))
 
 app.use('/', users)
 app.use('/recipe', recipes);

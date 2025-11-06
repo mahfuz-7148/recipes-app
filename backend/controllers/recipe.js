@@ -1,4 +1,16 @@
 import {Recipes} from '../models/recipe.js';
+import multer from 'multer'
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, './public/images')
+  },
+  fileName: (req, file, cb) => {
+    const fileName = Date.now() + '-' + file.fieldname
+    cb(null, fileName)
+  }
+})
+export const upload = multer({storage: storage})
 
 export const getRecipes = async (req, res) => {
   try {
@@ -29,7 +41,9 @@ export const getRecipe = async (req, res) => {
 
 export const addRecipe = async (req, res) => {
   try {
+    // console.log(req.user);
     const { title, ingredients, instructions, time } = req.body;
+
     if (!title || !ingredients || !instructions) {
       return res.status(400).json({ message: "Required fields can't be empty" });
     }
@@ -38,7 +52,9 @@ export const addRecipe = async (req, res) => {
       title,
       ingredients,
       instructions,
-      time
+      time,
+      coverImage: req.file.filename,
+      createdBy: req.user.id
     });
 
     return res.status(201).json({
@@ -54,19 +70,27 @@ export const editRecipe = async (req, res) => {
   try {
     const { id } = req.params;
     const { title, ingredients, instructions, time } = req.body;
+
+    const recipe = await Recipes.findById(id);
+
+    if (!recipe) {
+      return res.status(404).json({ message: 'Recipe not found' });
+    }
+
+    const coverImage = req.file?.filename ? req.file.filename : recipe.coverImage;
+
     const updatedRecipe = await Recipes.findByIdAndUpdate(
       id,
       {
         title,
         ingredients,
         instructions,
-        time
+        time,
+        coverImage
       },
       { new: true, runValidators: true }
     );
-    if (!updatedRecipe) {
-      return res.status(404).json({ message: 'Recipe not found' });
-    }
+
     res.json({
       message: 'Recipe updated successfully',
       data: updatedRecipe
