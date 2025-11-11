@@ -3,7 +3,6 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
-// Ensure upload directory exists
 const uploadDir = './public/images';
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -21,7 +20,6 @@ const storage = multer.diskStorage({
   }
 });
 
-// Configure multer with file filter and limits
 export const upload = multer({
   storage: storage,
   fileFilter: (req, file, cb) => {
@@ -40,7 +38,6 @@ export const upload = multer({
   }
 });
 
-// Get all recipes
 export const getRecipes = async (req, res) => {
   try {
     const recipes = await Recipes.find();
