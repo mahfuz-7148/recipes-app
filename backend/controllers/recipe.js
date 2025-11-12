@@ -79,8 +79,9 @@ export const addRecipe = async (req, res) => {
   try {
     const { title, ingredients, instructions, time } = req.body;
 
-    console.log('Body:', req.body);
-    console.log('File:', req.file);
+    // console.log('Body:', req.body);
+    // console.log('File:', req.file);
+    // console.log('File:', req.user);
 
     // Validate required fields
     if (!title || !ingredients || !instructions) {
@@ -103,7 +104,7 @@ export const addRecipe = async (req, res) => {
       instructions,
       time,
       coverImage: req.file.filename,
-      // createdBy: req.user.id // Commented out for now
+      createdBy: req.user.id
     });
 
     return res.status(201).json({
