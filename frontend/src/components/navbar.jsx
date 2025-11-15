@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import {NavLink, useNavigate} from 'react-router';
+import React, { useState } from 'react';
+import { NavLink, useNavigate } from 'react-router';
 import { Menu, X, ChefHat, Heart, BookOpen, LogIn, LogOut, User } from 'lucide-react';
 import { InputForm } from './inputForm.jsx';
 import { Modal } from './modal.jsx';
@@ -7,44 +7,23 @@ import { Modal } from './modal.jsx';
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
-  const [token, setToken] = useState(localStorage.getItem('token'));
-  const [user, setUser] = useState(() => {
-    const userStr = localStorage.getItem('user');
-    return userStr ? JSON.parse(userStr) : null;
-  });
   const navigate = useNavigate();
 
+  // সরাসরি localStorage থেকে পড়ুন
+  const token = localStorage.getItem('token');
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
   const isLogin = !!token;
 
-  // Auth change listener - এটা আছে কিনা check করুন
-  useEffect(() => {
-    const handleAuthChange = () => {
-      const newToken = localStorage.getItem('token');
-      const newUserStr = localStorage.getItem('user');
-      const newUser = newUserStr ? JSON.parse(newUserStr) : null;
-
-      console.log('Auth changed!', { newToken, newUser }); // Debug log
-
-      setToken(newToken);
-      setUser(newUser);
-    };
-
-    window.addEventListener('auth-change', handleAuthChange);
-
-    return () => {
-      window.removeEventListener('auth-change', handleAuthChange);
-    };
-  }, []);
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/');
+  };
 
   const checkLogin = () => {
     if (isLogin) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      setToken(null);
-      setUser(null);
-
-      window.dispatchEvent(new Event('auth-change'));
-      navigate('/');
+      handleLogout();
     } else {
       setIsOpen(true);
     }
@@ -220,7 +199,7 @@ export const Navbar = () => {
 
       {isOpen && (
         <Modal onClose={() => setIsOpen(false)}>
-          <InputForm setIsOpen={() => setIsOpen(false)} />
+          <InputForm setIsOpen={setIsOpen} />
         </Modal>
       )}
     </>

@@ -1,9 +1,10 @@
 import {AnimatePresence, motion} from 'framer-motion';
 import {FaEnvelope, FaEye, FaEyeSlash, FaLock, FaUser} from 'react-icons/fa';
 import {useState} from 'react';
+import {useNavigate} from 'react-router';
 import axios from 'axios';
 
-export const InputForm = ({ setIsOpen, setToken, setUser }) => {
+export const InputForm = ({ setIsOpen }) => {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -12,6 +13,7 @@ export const InputForm = ({ setIsOpen, setToken, setUser }) => {
   const [loading, setLoading] = useState(false)
   const [focusedField, setFocusedField] = useState(null)
   const [showPassword, setShowPassword] = useState(false)
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,19 +29,15 @@ export const InputForm = ({ setIsOpen, setToken, setUser }) => {
         password
       });
 
-      // localStorage এ save করুন - এটা যোগ করেছি
+      // localStorage এ save করুন
       localStorage.setItem('token', response?.data?.token);
       localStorage.setItem('user', JSON.stringify(response?.data?.user));
 
-      // State update করুন
-      if (setToken) setToken(response?.data?.token);
-      if (setUser) setUser(response?.data?.user);
-
-      // Custom event dispatch করুন
-      window.dispatchEvent(new Event('auth-change'));
-
       // Modal close করুন
       setIsOpen(false);
+
+      // Navigate করুন - Navbar auto refresh হবে
+      navigate('/');
 
     } catch (err) {
       setError(err.response?.data?.error || "Something went wrong");
