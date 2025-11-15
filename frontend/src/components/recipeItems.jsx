@@ -3,68 +3,9 @@ import { useLoaderData, useNavigate } from 'react-router';
 import { Clock, Edit, Trash2, Heart, Plus, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import {Modal} from './modal.jsx';
 
 const API_BASE_URL = 'http://localhost:5000';
-
-// Modal Component
-const Modal = ({ children, onClose }) => {
-  const backdropVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1 }
-  };
-
-  const modalVariants = {
-    hidden: {
-      opacity: 0,
-      scale: 0.8,
-      y: -50
-    },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      y: 0,
-      transition: {
-        type: "spring",
-        stiffness: 300,
-        damping: 25
-      }
-    },
-    exit: {
-      opacity: 0,
-      scale: 0.8,
-      y: 50,
-      transition: {
-        duration: 0.2
-      }
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <motion.div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-        variants={backdropVariants}
-        initial="hidden"
-        animate="visible"
-        exit="hidden"
-      />
-
-      {/* Modal Content */}
-      <motion.div
-        className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 z-10"
-        variants={modalVariants}
-        initial="hidden"
-        animate="visible"
-        exit="exit"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {children}
-      </motion.div>
-    </div>
-  );
-};
 
 export const RecipeItems = () => {
   const recipes = useLoaderData();

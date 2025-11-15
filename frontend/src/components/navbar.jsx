@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink } from 'react-router'; // use react-router-dom for current React Router versions
+import {NavLink, useNavigate} from 'react-router';
 import { useLocalStorage } from 'react-use';
 import { Menu, X, ChefHat, Heart, BookOpen, LogIn, LogOut, User } from 'lucide-react';
 import { InputForm } from './inputForm.jsx';
@@ -10,6 +10,7 @@ export const Navbar = () => {
   const [mobileMenu, setMobileMenu] = useState(false);
   const [token, setToken] = useLocalStorage('token', null);
   const [user, setUser] = useLocalStorage('user', null);
+  const navigate = useNavigate();
 
   // Correct logic: true if token exists
   const isLogin = !!token;
@@ -18,6 +19,9 @@ export const Navbar = () => {
     if (isLogin) {
       setToken(null);
       setUser(null);
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      navigate('/');
     } else {
       setIsOpen(true);
     }

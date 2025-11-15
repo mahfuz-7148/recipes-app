@@ -4,9 +4,19 @@ import foodRecipe from '../assets/foodRecipe.png'
 import { RecipeItems } from '../components/recipeItems.jsx'
 import { Modal } from '../components/modal.jsx'
 import { InputForm } from '../components/inputForm.jsx'
+import {useNavigate} from 'react-router';
 
 export const Home = () => {
   const [isOpen, setIsOpen] = useState(false)
+  const navigate = useNavigate()
+  const addRecipe = () => {
+    const token = localStorage.getItem('token')
+    if (token)
+      navigate("/addRecipe")
+    else {
+      setIsOpen(true)
+    }
+  }
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -72,7 +82,7 @@ export const Home = () => {
             </motion.p>
 
             <motion.button
-              onClick={() => setIsOpen(true)}
+              onClick={addRecipe}
               className="px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300"
               variants={itemVariants}
               whileHover={{ scale: 1.05 }}
