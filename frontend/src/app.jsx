@@ -3,6 +3,7 @@ import AddFoodRecipe from './pages/AddFoodRecipe';
 import axios from 'axios';
 import {Home} from './pages/home.jsx';
 import {MainNavigation} from './components/mainNavigation.jsx';
+import {ProtectedRoute} from './components/protectedRoute.jsx';
 
 const API_BASE_URL = 'http://localhost:5000';
 
@@ -107,7 +108,9 @@ const router = createBrowserRouter([
       },
       {
         path: "addRecipe",
-        element: <AddFoodRecipe />
+        element: <ProtectedRoute>
+          <AddFoodRecipe />
+        </ProtectedRoute>
       }
     ]
   }
