@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {NavLink, useNavigate} from 'react-router';
-import { useLocalStorage } from 'react-use';
 import { Menu, X, ChefHat, Heart, BookOpen, LogIn, LogOut, User } from 'lucide-react';
 import { InputForm } from './inputForm.jsx';
 import { Modal } from './modal.jsx';
@@ -8,19 +7,43 @@ import { Modal } from './modal.jsx';
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
-  const [token, setToken] = useLocalStorage('token', null);
-  const [user, setUser] = useLocalStorage('user', null);
+  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [user, setUser] = useState(() => {
+    const userStr = localStorage.getItem('user');
+    return userStr ? JSON.parse(userStr) : null;
+  });
   const navigate = useNavigate();
 
-  // Correct logic: true if token exists
   const isLogin = !!token;
+
+  // Auth change listener - এটা আছে কিনা check করুন
+  useEffect(() => {
+    const handleAuthChange = () => {
+      const newToken = localStorage.getItem('token');
+      const newUserStr = localStorage.getItem('user');
+      const newUser = newUserStr ? JSON.parse(newUserStr) : null;
+
+      console.log('Auth changed!', { newToken, newUser }); // Debug log
+
+      setToken(newToken);
+      setUser(newUser);
+    };
+
+    window.addEventListener('auth-change', handleAuthChange);
+
+    return () => {
+      window.removeEventListener('auth-change', handleAuthChange);
+    };
+  }, []);
 
   const checkLogin = () => {
     if (isLogin) {
-      setToken(null);
-      setUser(null);
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      setToken(null);
+      setUser(null);
+
+      window.dispatchEvent(new Event('auth-change'));
       navigate('/');
     } else {
       setIsOpen(true);
@@ -32,7 +55,6 @@ export const Navbar = () => {
       <header className="fixed top-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Logo */}
             <NavLink to="/" className="flex items-center gap-2 group">
               <div className="bg-gradient-to-br from-emerald-500 to-teal-600 p-2 rounded-xl group-hover:scale-110 transition-transform duration-300 shadow-lg">
                 <ChefHat className="w-6 h-6 text-white" />
@@ -42,7 +64,6 @@ export const Navbar = () => {
               </span>
             </NavLink>
 
-            {/* Desktop Menu */}
             <ul className="hidden md:flex items-center gap-1">
               <li>
                 <NavLink
@@ -87,7 +108,6 @@ export const Navbar = () => {
               </li>
             </ul>
 
-            {/* Login/Logout Button */}
             <div className="hidden md:flex items-center gap-3">
               {user?.email && (
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg">
@@ -108,7 +128,6 @@ export const Navbar = () => {
               </button>
             </div>
 
-            {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenu(!mobileMenu)}
               className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -117,7 +136,6 @@ export const Navbar = () => {
             </button>
           </div>
 
-          {/* Mobile Menu */}
           {mobileMenu && (
             <div className="md:hidden py-4 border-t border-gray-200">
               <ul className="space-y-2">
@@ -198,13 +216,11 @@ export const Navbar = () => {
         </nav>
       </header>
 
-      {/* Spacer for fixed navbar */}
       <div className="h-16"></div>
 
       {isOpen && (
         <Modal onClose={() => setIsOpen(false)}>
-          {/* Pass setToken and setUser to update login state immediately */}
-          <InputForm setIsOpen={() => setIsOpen(false)} setToken={setToken} setUser={setUser} />
+          <InputForm setIsOpen={() => setIsOpen(false)} />
         </Modal>
       )}
     </>

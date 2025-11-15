@@ -9,11 +9,14 @@ export const InputForm = ({ setIsOpen, setToken, setUser }) => {
   const [password, setPassword] = useState("")
   const [isSignUp, setIsSignUp] = useState(false)
   const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
   const [focusedField, setFocusedField] = useState(null)
   const [showPassword, setShowPassword] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
       const endpoint = isSignUp ? "signUp" : "login";
@@ -24,14 +27,24 @@ export const InputForm = ({ setIsOpen, setToken, setUser }) => {
         password
       });
 
-      // Update both localStorage and state immediately
-      setToken(response.data.token);
-      setUser(response.data.user);
+      // localStorage এ save করুন - এটা যোগ করেছি
+      localStorage.setItem('token', response?.data?.token);
+      localStorage.setItem('user', JSON.stringify(response?.data?.user));
 
+      // State update করুন
+      if (setToken) setToken(response?.data?.token);
+      if (setUser) setUser(response?.data?.user);
+
+      // Custom event dispatch করুন
+      window.dispatchEvent(new Event('auth-change'));
+
+      // Modal close করুন
       setIsOpen(false);
 
     } catch (err) {
       setError(err.response?.data?.error || "Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -180,12 +193,13 @@ export const InputForm = ({ setIsOpen, setToken, setUser }) => {
       {/* Submit Button */}
       <motion.button
         type="submit"
-        className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transform transition-all"
+        disabled={loading}
+        className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transform transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         variants={itemVariants}
-        whileHover={{ scale: 1.02, y: -2 }}
-        whileTap={{ scale: 0.98 }}
+        whileHover={{ scale: loading ? 1 : 1.02, y: loading ? 0 : -2 }}
+        whileTap={{ scale: loading ? 1 : 0.98 }}
       >
-        {isSignUp ? "Sign Up" : "Login"}
+        {loading ? "Please wait..." : (isSignUp ? "Sign Up" : "Login")}
       </motion.button>
 
       {/* Toggle Sign Up/Login */}

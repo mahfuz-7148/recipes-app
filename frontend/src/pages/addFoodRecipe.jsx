@@ -1,7 +1,6 @@
 import axios from 'axios';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { useLocalStorage } from 'react-use';
 import { motion } from 'framer-motion';
 import { Upload, Clock, ChefHat, FileText, Image, Loader2 } from 'lucide-react';
 
@@ -18,7 +17,9 @@ export default function AddFoodRecipe() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [preview, setPreview] = useState(null);
-  const [token] = useLocalStorage('token'); // ✅ useLocalStorage hook
+
+  const token = localStorage.getItem('token');
+
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -57,7 +58,7 @@ export default function AddFoodRecipe() {
       await axios.post(`${API_BASE_URL}/recipe`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${token}` // ✅ useLocalStorage থেকে token
+          'Authorization': `Bearer ${token}`
         }
       });
 

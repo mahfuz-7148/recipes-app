@@ -1,14 +1,40 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react' // useEffect add করুন
 import { motion } from 'framer-motion'
 import foodRecipe from '../assets/foodRecipe.png'
 import { RecipeItems } from '../components/recipeItems.jsx'
 import { Modal } from '../components/modal.jsx'
 import { InputForm } from '../components/inputForm.jsx'
-import {useNavigate} from 'react-router';
+import { useNavigate } from 'react-router';
 
 export const Home = () => {
   const [isOpen, setIsOpen] = useState(false)
+
+  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [user, setUser] = useState(() => {
+    const userStr = localStorage.getItem('user');
+    return userStr ? JSON.parse(userStr) : null;
+  });
+
   const navigate = useNavigate()
+
+  // Auth change listener - এটা যোগ করুন
+  useEffect(() => {
+    const handleAuthChange = () => {
+      const newToken = localStorage.getItem('token');
+      const newUserStr = localStorage.getItem('user');
+      const newUser = newUserStr ? JSON.parse(newUserStr) : null;
+
+      setToken(newToken);
+      setUser(newUser);
+    };
+
+    window.addEventListener('auth-change', handleAuthChange);
+
+    return () => {
+      window.removeEventListener('auth-change', handleAuthChange);
+    };
+  }, []);
+
   const addRecipe = () => {
     const token = localStorage.getItem('token')
     if (token)
@@ -132,7 +158,11 @@ export const Home = () => {
       {/* Modal */}
       {isOpen && (
         <Modal onClose={() => setIsOpen(false)}>
-          <InputForm setIsOpen={() => setIsOpen(false)} />
+          <InputForm
+            setIsOpen={() => setIsOpen(false)}
+            setToken={setToken}
+            setUser={setUser}
+          />
         </Modal>
       )}
 
