@@ -48,11 +48,15 @@ const getAllRecipes = async () => {
 const getMyRecipes = async () => {
   try {
     const userStr = localStorage.getItem('user');
+
     const user = userStr ? JSON.parse(userStr) : null;
+    console.log(user)
 
     if (!user?._id) return [];
 
     const allRecipes = await getAllRecipes();
+    // console.log(allRecipes)
+
     return allRecipes.filter(recipe => recipe.createdBy === user._id);
   } catch (error) {
     console.error('Error fetching my recipes:', error);

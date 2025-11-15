@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { useLoaderData, useNavigate } from 'react-router';
 import { Clock, Edit, Trash2, Heart, Plus, Loader2 } from 'lucide-react';
 import axios from 'axios';
@@ -14,6 +14,10 @@ export const RecipeItems = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    setRecipeList(recipes || []);
+  }, [recipes]);
 
   const handleDeleteClick = (id) => {
     console.log('Delete clicked for:', id);
