@@ -17,14 +17,18 @@ export const RecipeItems = () => {
   let path = window.location.pathname === "/myRecipe";
   let isFavPage = window.location.pathname === "/favRecipe";
   let isHomePage = window.location.pathname === "/";
-  let favItems = JSON.parse(localStorage.getItem("fav")) ?? [];
-  const [isFavRecipe, setIsFavRecipe] = useState(false);
+
+  // Get favorites from localStorage
+  const [favItems, setFavItems] = useState(
+    JSON.parse(localStorage.getItem("fav")) ?? []
+  );
 
   useEffect(() => {
     setRecipeList(recipes || []);
   }, [recipes]);
 
-  const handleDeleteClick = (id) => {
+  const handleDeleteClick = (e, id) => {
+    e.stopPropagation();
     console.log('Delete clicked for:', id);
     setDeleteId(id);
     setShowDeleteModal(true);
@@ -37,7 +41,8 @@ export const RecipeItems = () => {
     try {
       await axios.delete(`${API_BASE_URL}/recipe/${deleteId}`);
       setRecipeList(recipeList.filter(recipe => recipe._id !== deleteId));
-      let filterItem = favItems.filter(recipe => recipe._id !== deleteId);
+      const filterItem = favItems.filter(recipe => recipe._id !== deleteId);
+      setFavItems(filterItem);
       localStorage.setItem("fav", JSON.stringify(filterItem));
       setShowDeleteModal(false);
       setDeleteId(null);
@@ -54,15 +59,32 @@ export const RecipeItems = () => {
     setDeleteId(null);
   };
 
-  const handleEdit = (id) => {
+  const handleEdit = (e, id) => {
+    e.stopPropagation();
     navigate(`/editRecipe/${id}`);
   };
 
-  const favRecipe = (item) => {
-    let filterItem = favItems.filter(recipe => recipe._id !== item._id);
-    favItems = favItems.filter(recipe => recipe._id === item._id).length === 0 ? [...favItems, item] : filterItem;
-    localStorage.setItem("fav", JSON.stringify(favItems));
-    setIsFavRecipe(pre => !pre);
+  const favRecipe = (e, item) => {
+    e.stopPropagation();
+
+    const isFavorited = favItems.some(recipe => recipe._id === item._id);
+    let updatedFavItems;
+
+    if (isFavorited) {
+      // Remove from favorites
+      updatedFavItems = favItems.filter(recipe => recipe._id !== item._id);
+
+      // ✅ If on favorite page, also remove from displayed list
+      if (isFavPage) {
+        setRecipeList(recipeList.filter(recipe => recipe._id !== item._id));
+      }
+    } else {
+      // Add to favorites
+      updatedFavItems = [...favItems, item];
+    }
+
+    setFavItems(updatedFavItems);
+    localStorage.setItem("fav", JSON.stringify(updatedFavItems));
   };
 
   const containerVariants = {
@@ -96,126 +118,140 @@ export const RecipeItems = () => {
         </motion.div>
 
         {/* Recipe Grid */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-        >
-          {recipeList?.map((item, index) => {
-            const imageUrl = item.coverImage
-              ? `${API_BASE_URL}/public/images/${item.coverImage}`
-              : null;
+        <AnimatePresence mode="popLayout">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+          >
+            {recipeList?.map((item, index) => {
+              const imageUrl = item.coverImage
+                ? `${API_BASE_URL}/public/images/${item.coverImage}`
+                : null;
 
-            return (
-              <motion.div
-                key={item._id || index}
-                variants={cardVariants}
-                whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                onClick={() => navigate(`/recipe/${item._id}`)}
-                className="bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden group"
-              >
-                {/* Card Image */}
-                <div className="relative h-48 bg-gradient-to-br from-orange-400 to-orange-600 overflow-hidden">
-                  {imageUrl ? (
-                    <img
-                      src={imageUrl}
-                      alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.parentElement.querySelector('.fallback-icon').style.display = 'flex';
-                      }}
-                    />
-                  ) : null}
+              const isFavorited = favItems.some(res => res._id === item._id);
 
-                  {/* Fallback Icon */}
-                  <div
-                    className="fallback-icon absolute inset-0 flex items-center justify-center"
-                    style={{ display: imageUrl ? 'none' : 'flex' }}
-                  >
-                    <svg
-                      className="w-20 h-20 text-white opacity-50"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+              return (
+                <motion.div
+                  key={item._id || index}
+                  variants={cardVariants}
+                  exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                  layout
+                  whileHover={{ y: -8, transition: { duration: 0.2 } }}
+                  onClick={() => navigate(`/recipe/${item._id}`)}
+                  className="bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden group cursor-pointer"
+                >
+                  {/* Card Image */}
+                  <div className="relative h-48 bg-gradient-to-br from-orange-400 to-orange-600 overflow-hidden">
+                    {imageUrl ? (
+                      <img
+                        src={imageUrl}
+                        alt={item.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.parentElement.querySelector('.fallback-icon').style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+
+                    {/* Fallback Icon */}
+                    <div
+                      className="fallback-icon absolute inset-0 flex items-center justify-center"
+                      style={{ display: imageUrl ? 'none' : 'flex' }}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                    </svg>
+                      <svg
+                        className="w-20 h-20 text-white opacity-50"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                      </svg>
+                    </div>
+
+                    {/* Favorite Button */}
+                    {!path && (
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={(e) => favRecipe(e, item)}
+                        className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-all z-10"
+                        aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+                      >
+                        <Heart
+                          className={`w-5 h-5 transition-all ${
+                            isFavorited
+                              ? 'fill-red-500 text-red-500'
+                              : 'text-gray-400 hover:text-red-400'
+                          }`}
+                        />
+                      </motion.button>
+                    )}
                   </div>
 
-                  {/* Favorite Button */}
-                  {!path && (
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => favRecipe(item)}
-                      className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-all"
-                      aria-label="Add to favorites"
-                    >
-                      <Heart
-                        className="w-5 h-5 transition-colors"
-                        style={{ color: favItems.some(res => res._id === item._id) ? "red" : "#9ca3af" }}
-                      />
-                    </motion.button>
-                  )}
-                </div>
+                  {/* Card Content */}
+                  <div className="p-5">
+                    {/* Title */}
+                    <h3 className="text-xl font-semibold text-gray-800 mb-3 line-clamp-2 group-hover:text-orange-500 transition-colors">
+                      {item.title}
+                    </h3>
 
-                {/* Card Content */}
-                <div className="p-5">
-                  {/* Title */}
-                  <h3 className="text-xl font-semibold text-gray-800 mb-3 line-clamp-2 group-hover:text-orange-500 transition-colors">
-                    {item.title}
-                  </h3>
-
-                  {/* Meta Info */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-2 text-gray-600">
-                      <Clock className="w-4 h-4 text-orange-500" />
-                      <span className="text-sm font-medium">{item.time || 'N/A'}</span>
+                    {/* Meta Info */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-2 text-gray-600">
+                        <Clock className="w-4 h-4 text-orange-500" />
+                        <span className="text-sm font-medium">{item.time || 'N/A'}</span>
+                      </div>
+                      {!path && isFavorited && (
+                        <span className="text-xs px-2 py-1 bg-red-50 text-red-600 rounded-full font-medium">
+                          Favorite
+                        </span>
+                      )}
                     </div>
+
+                    {/* Action Buttons */}
+                    {path && (
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={(e) => handleEdit(e, item._id)}
+                          className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        >
+                          <Edit className="w-4 h-4" />
+                          <span>Edit</span>
+                        </motion.button>
+
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={(e) => handleDeleteClick(e, item._id)}
+                          className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span>Delete</span>
+                        </motion.button>
+                      </div>
+                    )}
                   </div>
-
-                  {/* Action Buttons */}
-                  {path && (
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => handleEdit(item._id)}
-                        className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      >
-                        <Edit className="w-4 h-4" />
-                        <span>Edit</span>
-                      </motion.button>
-
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => handleDeleteClick(item._id)}
-                        className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        <span>Delete</span>
-                      </motion.button>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            );
-          })}
-        </motion.div>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </AnimatePresence>
 
         {/* Empty State */}
         {recipeList.length === 0 && (
@@ -225,35 +261,53 @@ export const RecipeItems = () => {
             className="text-center py-20"
           >
             <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-orange-100 to-amber-100 rounded-full mb-6">
-              <svg
-                className="w-12 h-12 text-orange-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                />
-              </svg>
+              {isFavPage ? (
+                <Heart className="w-12 h-12 text-orange-500" />
+              ) : (
+                <svg
+                  className="w-12 h-12 text-orange-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
+                </svg>
+              )}
             </div>
             <h3 className="text-2xl font-bold text-gray-800 mb-2">
-              No Recipes Yet
+              {isFavPage ? 'No Favorite Recipes Yet' : 'No Recipes Yet'}
             </h3>
             <p className="text-gray-600 mb-6 text-lg">
-              Start adding your favorite recipes to see them here!
+              {isFavPage
+                ? 'Start adding recipes to your favorites to see them here!'
+                : 'Start adding your favorite recipes to see them here!'}
             </p>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => navigate('/addRecipe')}
-              className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all"
-            >
-              <Plus className="w-5 h-5" />
-              <span>Add Your First Recipe</span>
-            </motion.button>
+            {!isFavPage && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate('/addRecipe')}
+                className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all"
+              >
+                <Plus className="w-5 h-5" />
+                <span>Add Your First Recipe</span>
+              </motion.button>
+            )}
+            {isFavPage && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate('/')}
+                className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all"
+              >
+                <span>Browse Recipes</span>
+              </motion.button>
+            )}
           </motion.div>
         )}
       </div>

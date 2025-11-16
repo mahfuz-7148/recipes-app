@@ -31,7 +31,6 @@ api.interceptors.response.use(
       console.log('Unauthorized - clearing auth data');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
     }
     return Promise.reject(error);
   }

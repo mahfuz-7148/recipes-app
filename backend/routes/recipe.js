@@ -5,7 +5,7 @@ import verifyToken from '../middleware/auth.js';
 export const router = express.Router();
 
 router.get('/', getRecipes);
-router.get('/:id', verifyToken, getRecipe);
+router.get('/:id', getRecipe);
 router.post('/', verifyToken, upload.single('file'), addRecipe);
 router.put('/:id', verifyToken, upload.single('file'), editRecipe);
 router.delete('/:id', verifyToken, deleteRecipe);
