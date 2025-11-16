@@ -6,6 +6,6 @@ export const router = express.Router();
 
 router.get('/', getRecipes);
 router.get('/:id', verifyToken, getRecipe);
-router.post('/', upload.single('file'), verifyToken, addRecipe);
-router.put('/:id', upload.single('file'), editRecipe);
-router.delete('/:id', deleteRecipe);
+router.post('/', verifyToken, upload.single('file'), addRecipe);
+router.put('/:id', verifyToken, upload.single('file'), editRecipe);
+router.delete('/:id', verifyToken, deleteRecipe);
