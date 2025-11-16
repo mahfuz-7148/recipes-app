@@ -14,6 +14,11 @@ export const RecipeItems = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  let path = window.location.pathname === "/myRecipe";
+  let isFavPage = window.location.pathname === "/favRecipe";
+  let isHomePage = window.location.pathname === "/";
+  let favItems = JSON.parse(localStorage.getItem("fav")) ?? [];
+  const [isFavRecipe, setIsFavRecipe] = useState(false);
 
   useEffect(() => {
     setRecipeList(recipes || []);
@@ -32,6 +37,8 @@ export const RecipeItems = () => {
     try {
       await axios.delete(`${API_BASE_URL}/recipe/${deleteId}`);
       setRecipeList(recipeList.filter(recipe => recipe._id !== deleteId));
+      let filterItem = favItems.filter(recipe => recipe._id !== deleteId);
+      localStorage.setItem("fav", JSON.stringify(filterItem));
       setShowDeleteModal(false);
       setDeleteId(null);
     } catch (error) {
@@ -48,7 +55,14 @@ export const RecipeItems = () => {
   };
 
   const handleEdit = (id) => {
-    navigate(`/recipe/edit/${id}`);
+    navigate(`/editRecipe/${id}`);
+  };
+
+  const favRecipe = (item) => {
+    let filterItem = favItems.filter(recipe => recipe._id !== item._id);
+    favItems = favItems.filter(recipe => recipe._id === item._id).length === 0 ? [...favItems, item] : filterItem;
+    localStorage.setItem("fav", JSON.stringify(favItems));
+    setIsFavRecipe(pre => !pre);
   };
 
   const containerVariants = {
@@ -74,7 +88,7 @@ export const RecipeItems = () => {
           className="mb-8"
         >
           <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent mb-2">
-            My Recipes
+            {isHomePage ? 'Recipes' : isFavPage ? 'My Favourites' : 'My Recipes'}
           </h1>
           <p className="text-gray-600 text-lg">
             {recipeList.length} {recipeList.length === 1 ? 'recipe' : 'recipes'} found
@@ -98,6 +112,7 @@ export const RecipeItems = () => {
                 key={item._id || index}
                 variants={cardVariants}
                 whileHover={{ y: -8, transition: { duration: 0.2 } }}
+                onDoubleClick={() => navigate(`/recipe/${item._id}`)}
                 className="bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden group"
               >
                 {/* Card Image */}
@@ -141,14 +156,20 @@ export const RecipeItems = () => {
                   </div>
 
                   {/* Favorite Button */}
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-all"
-                    aria-label="Add to favorites"
-                  >
-                    <Heart className="w-5 h-5 text-gray-400 hover:text-red-500 transition-colors" />
-                  </motion.button>
+                  {!path && (
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => favRecipe(item)}
+                      className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-all"
+                      aria-label="Add to favorites"
+                    >
+                      <Heart
+                        className="w-5 h-5 transition-colors"
+                        style={{ color: favItems.some(res => res._id === item._id) ? "red" : "#9ca3af" }}
+                      />
+                    </motion.button>
+                  )}
                 </div>
 
                 {/* Card Content */}
@@ -167,27 +188,29 @@ export const RecipeItems = () => {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => handleEdit(item._id)}
-                      className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                    >
-                      <Edit className="w-4 h-4" />
-                      <span>Edit</span>
-                    </motion.button>
+                  {path && (
+                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => handleEdit(item._id)}
+                        className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      >
+                        <Edit className="w-4 h-4" />
+                        <span>Edit</span>
+                      </motion.button>
 
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => handleDeleteClick(item._id)}
-                      className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span>Delete</span>
-                    </motion.button>
-                  </div>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => handleDeleteClick(item._id)}
+                        className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span>Delete</span>
+                      </motion.button>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             );
@@ -225,7 +248,7 @@ export const RecipeItems = () => {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => navigate('/recipe/add')}
+              onClick={() => navigate('/addRecipe')}
               className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all"
             >
               <Plus className="w-5 h-5" />

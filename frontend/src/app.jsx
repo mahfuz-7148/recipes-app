@@ -4,6 +4,8 @@ import axios from 'axios';
 import {Home} from './pages/home.jsx';
 import {MainNavigation} from './components/mainNavigation.jsx';
 import {ProtectedRoute} from './components/protectedRoute.jsx';
+import {EditRecipe} from './pages/editRecipe.jsx';
+import {RecipeDetails} from './pages/recipeDetails.jsx';
 
 const API_BASE_URL = 'http://localhost:5000';
 
@@ -102,12 +104,12 @@ const router = createBrowserRouter([
       },
       {
         path: "myRecipe",
-        element: <Home />,
+        element:  <ProtectedRoute><Home /></ProtectedRoute>,
         loader: getMyRecipes
       },
       {
         path: "favRecipe",
-        element: <Home />,
+        element:  <ProtectedRoute><Home /></ProtectedRoute>,
         loader: getFavRecipes
       },
       {
@@ -115,6 +117,17 @@ const router = createBrowserRouter([
         element: <ProtectedRoute>
           <AddFoodRecipe />
         </ProtectedRoute>
+      },
+      {
+        path: "editRecipe/:id",
+        element: <ProtectedRoute>
+          <EditRecipe />
+        </ProtectedRoute>
+      },
+      {
+        path: "recipe/:id",
+        element: <RecipeDetails />,
+        loader: getRecipe
       }
     ]
   }
