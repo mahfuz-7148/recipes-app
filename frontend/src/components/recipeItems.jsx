@@ -112,7 +112,7 @@ export const RecipeItems = () => {
                 key={item._id || index}
                 variants={cardVariants}
                 whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                onDoubleClick={() => navigate(`/recipe/${item._id}`)}
+                onClick={() => navigate(`/recipe/${item._id}`)}
                 className="bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden group"
               >
                 {/* Card Image */}
