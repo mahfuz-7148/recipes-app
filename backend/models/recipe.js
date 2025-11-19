@@ -17,6 +17,9 @@ const recipeSchema = mongoose.Schema({
     type: String,
   },
   coverImage: {
+    type: String,  // Cloudinary URL
+  },
+  cloudinaryId: {  // নতুন field - delete করার জন্য দরকার
     type: String,
   },
   createdBy: {

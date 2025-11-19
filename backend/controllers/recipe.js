@@ -1,24 +1,10 @@
-import {Recipes} from '../models/recipe.js';
+import { Recipes } from '../models/recipe.js';
 import multer from 'multer';
 import path from 'path';
-import fs from 'fs';
+import { uploadToCloudinary, deleteFromCloudinary, getPublicIdFromUrl } from '../utils/cloudinaryHelper.js';
 
-const uploadDir = './public/images';
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// Configure multer storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, './public/images');
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const fileName = Date.now() + '-' + Math.round(Math.random() * 1E9) + ext;
-    cb(null, fileName);
-  }
-});
+// Multer configuration - Memory storage for Vercel
+const storage = multer.memoryStorage();
 
 export const upload = multer({
   storage: storage,
@@ -30,7 +16,7 @@ export const upload = multer({
     if (extname && mimetype) {
       cb(null, true);
     } else {
-      cb(new Error('Only image files are allowed!'));
+      cb(new Error('শুধুমাত্র image files allowed!'));
     }
   },
   limits: {
@@ -38,9 +24,10 @@ export const upload = multer({
   }
 });
 
+// Get all recipes
 export const getRecipes = async (req, res) => {
   try {
-    const recipes = await Recipes.find();
+    const recipes = await Recipes.find().sort({ createdAt: -1 });
     res.json({
       message: 'Recipes fetched successfully',
       data: recipes
@@ -52,7 +39,6 @@ export const getRecipes = async (req, res) => {
     });
   }
 };
-
 
 // Get single recipe by ID
 export const getRecipe = async (req, res) => {
@@ -75,14 +61,10 @@ export const getRecipe = async (req, res) => {
   }
 };
 
-// Add new recipe
+// Add new recipe with Cloudinary upload
 export const addRecipe = async (req, res) => {
   try {
     const { title, ingredients, instructions, time } = req.body;
-
-    // console.log('Body:', req.body);
-    // console.log('File:', req.file);
-    // console.log('File:', req.user);
 
     // Validate required fields
     if (!title || !ingredients || !instructions) {
@@ -98,13 +80,20 @@ export const addRecipe = async (req, res) => {
       });
     }
 
-    // Create new recipe without authentication (temporary)
+    // Upload image to Cloudinary
+    console.log('Uploading to Cloudinary...');
+    const cloudinaryResult = await uploadToCloudinary(req.file.buffer, 'food-recipes');
+
+    console.log('Cloudinary upload successful:', cloudinaryResult.secure_url);
+
+    // Create new recipe with Cloudinary URL
     const newRecipe = await Recipes.create({
       title,
       ingredients,
       instructions,
       time,
-      coverImage: req.file.filename,
+      coverImage: cloudinaryResult.secure_url,
+      cloudinaryId: cloudinaryResult.public_id,
       createdBy: req.user.id
     });
 
@@ -113,14 +102,7 @@ export const addRecipe = async (req, res) => {
       data: newRecipe
     });
   } catch (error) {
-    // Delete uploaded file if recipe creation fails
-    if (req.file) {
-      const filePath = path.join('./public/images', req.file.filename);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-    }
-
+    console.error('Add recipe error:', error);
     res.status(500).json({
       message: 'Error creating recipe',
       error: error.message
@@ -128,7 +110,7 @@ export const addRecipe = async (req, res) => {
   }
 };
 
-// Edit existing recipe
+// Edit existing recipe with Cloudinary
 export const editRecipe = async (req, res) => {
   try {
     const { id } = req.params;
@@ -138,26 +120,29 @@ export const editRecipe = async (req, res) => {
     const recipe = await Recipes.findById(id);
 
     if (!recipe) {
-      // Delete uploaded file if recipe not found
-      if (req.file) {
-        const filePath = path.join('./public/images', req.file.filename);
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-        }
-      }
       return res.status(404).json({ message: 'Recipe not found' });
     }
 
-    // Delete old image if new one is uploaded
-    if (req.file && recipe.coverImage) {
-      const oldImagePath = path.join('./public/images', recipe.coverImage);
-      if (fs.existsSync(oldImagePath)) {
-        fs.unlinkSync(oldImagePath);
-      }
-    }
+    let coverImage = recipe.coverImage;
+    let cloudinaryId = recipe.cloudinaryId;
 
-    // Determine which image to use
-    const coverImage = req.file?.filename || recipe.coverImage;
+    // If new image is uploaded
+    if (req.file) {
+      console.log('New image uploaded, updating Cloudinary...');
+
+      // Delete old image from Cloudinary
+      if (recipe.cloudinaryId) {
+        console.log('Deleting old image:', recipe.cloudinaryId);
+        await deleteFromCloudinary(recipe.cloudinaryId);
+      }
+
+      // Upload new image to Cloudinary
+      const cloudinaryResult = await uploadToCloudinary(req.file.buffer, 'food-recipes');
+      coverImage = cloudinaryResult.secure_url;
+      cloudinaryId = cloudinaryResult.public_id;
+
+      console.log('New image uploaded:', coverImage);
+    }
 
     // Update recipe
     const updatedRecipe = await Recipes.findByIdAndUpdate(
@@ -167,7 +152,8 @@ export const editRecipe = async (req, res) => {
         ingredients: ingredients || recipe.ingredients,
         instructions: instructions || recipe.instructions,
         time: time || recipe.time,
-        coverImage
+        coverImage,
+        cloudinaryId
       },
       { new: true, runValidators: true }
     );
@@ -177,14 +163,7 @@ export const editRecipe = async (req, res) => {
       data: updatedRecipe
     });
   } catch (error) {
-    // Delete uploaded file if update fails
-    if (req.file) {
-      const filePath = path.join('./public/images', req.file.filename);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-    }
-
+    console.error('Edit recipe error:', error);
     res.status(500).json({
       message: 'Error updating recipe',
       error: error.message
@@ -192,7 +171,7 @@ export const editRecipe = async (req, res) => {
   }
 };
 
-// Delete recipe
+// Delete recipe with Cloudinary cleanup
 export const deleteRecipe = async (req, res) => {
   try {
     const { id } = req.params;
@@ -204,22 +183,21 @@ export const deleteRecipe = async (req, res) => {
       return res.status(404).json({ message: 'Recipe not found' });
     }
 
-    // Delete recipe
-    const deletedRecipe = await Recipes.findByIdAndDelete(id);
-
-    // Delete associated image file
-    if (deletedRecipe.coverImage) {
-      const imagePath = path.join('./public/images', deletedRecipe.coverImage);
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
-      }
+    // Delete image from Cloudinary
+    if (recipe.cloudinaryId) {
+      console.log('Deleting image from Cloudinary:', recipe.cloudinaryId);
+      await deleteFromCloudinary(recipe.cloudinaryId);
     }
+
+    // Delete recipe from database
+    const deletedRecipe = await Recipes.findByIdAndDelete(id);
 
     res.json({
       message: 'Recipe deleted successfully',
       data: deletedRecipe
     });
   } catch (error) {
+    console.error('Delete recipe error:', error);
     res.status(500).json({
       message: 'Error deleting recipe',
       error: error.message
