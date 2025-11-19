@@ -1,11 +1,12 @@
 import { createBrowserRouter, RouterProvider } from "react-router";
-import AddFoodRecipe from './pages/AddFoodRecipe';
+
 import axios from 'axios';
 import {Home} from './pages/home.jsx';
 import {MainNavigation} from './components/mainNavigation.jsx';
 import {ProtectedRoute} from './components/protectedRoute.jsx';
 import {EditRecipe} from './pages/editRecipe.jsx';
 import {RecipeDetails} from './pages/recipeDetails.jsx';
+import AddFoodRecipe from './pages/addFoodRecipe.jsx';
 
 const API_BASE_URL = 'http://localhost:5000';
 
