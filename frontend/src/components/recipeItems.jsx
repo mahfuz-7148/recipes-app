@@ -1,3 +1,8 @@
+
+
+
+
+
 import React, {useEffect, useState} from 'react';
 import { useLoaderData, useNavigate } from 'react-router';
 import { Clock, Edit, Trash2, Heart, Plus, Loader2 } from 'lucide-react';
@@ -126,9 +131,7 @@ export const RecipeItems = () => {
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
           >
             {recipeList?.map((item, index) => {
-              const imageUrl = item.coverImage
-                ? `${API_BASE_URL}/public/images/${item.coverImage}`
-                : null;
+               const imageUrl = item.coverImage;
 
               const isFavorited = favItems.some(res => res._id === item._id);
 
