@@ -10,7 +10,7 @@ import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import {Modal} from './modal.jsx';
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'https://recipes-app-8kbz.vercel.app';
 
 export const RecipeItems = () => {
   const recipes = useLoaderData();

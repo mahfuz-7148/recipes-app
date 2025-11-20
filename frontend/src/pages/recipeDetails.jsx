@@ -37,7 +37,7 @@ export const RecipeDetails = () => {
     const fetchCreator = async () => {
       try {
         const token = localStorage.getItem('token')
-        const response = await axios.get(`http://localhost:5000/user/${recipeData.createdBy}`, {
+        const response = await axios.get(`https://recipes-app-8kbz.vercel.app/user/${recipeData.createdBy}`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         const email = response.data.email || response.data.data?.email || 'Chef'
@@ -339,7 +339,7 @@ export const RecipeDetails = () => {
 //     const fetchCreator = async () => {
 //       try {
 //         const token = localStorage.getItem('token')
-//         const response = await axios.get(`http://localhost:5000/user/${recipeData.createdBy}`, {
+//         const response = await axios.get(`https://recipes-app-8kbz.vercel.app/user/${recipeData.createdBy}`, {
 //           headers: {
 //             'Authorization': `Bearer ${token}`
 //           }
@@ -445,7 +445,7 @@ export const RecipeDetails = () => {
 //           {/* Cover Image */}
 //           <div className="relative h-[400px] overflow-hidden">
 //             <img
-//               src={`http://localhost:5000/public/images/${recipeData.coverImage}`}
+//               src={`https://recipes-app-8kbz.vercel.app/public/images/${recipeData.coverImage}`}
 //               alt={recipeData.title}
 //               className="w-full h-full object-cover"
 //               onError={(e) => {

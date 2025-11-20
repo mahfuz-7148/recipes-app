@@ -8,7 +8,7 @@ import {EditRecipe} from './pages/editRecipe.jsx';
 import {RecipeDetails} from './pages/recipeDetails.jsx';
 import AddFoodRecipe from './pages/addFoodRecipe.jsx';
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'https://recipes-app-8kbz.vercel.app';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
