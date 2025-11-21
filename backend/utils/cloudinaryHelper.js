@@ -9,6 +9,15 @@ import { Readable } from 'stream';
  */
 export const uploadToCloudinary = (fileBuffer, folder = 'food-recipes') => {
   return new Promise((resolve, reject) => {
+    console.log('=== Cloudinary Upload Started ===');
+    console.log('Buffer size:', fileBuffer ? fileBuffer.length : 0, 'bytes');
+    console.log('Folder:', folder);
+
+    if (!fileBuffer || fileBuffer.length === 0) {
+      reject(new Error('Empty file buffer'));
+      return;
+    }
+
     const uploadStream = cloudinary.uploader.upload_stream(
       {
         folder: folder,
@@ -23,6 +32,9 @@ export const uploadToCloudinary = (fileBuffer, folder = 'food-recipes') => {
           console.error('Cloudinary upload error:', error);
           reject(error);
         } else {
+          console.log('Cloudinary upload success!');
+          console.log('Image URL:', result.secure_url);
+          console.log('Public ID:', result.public_id);
           resolve(result);
         }
       }
@@ -40,12 +52,28 @@ export const uploadToCloudinary = (fileBuffer, folder = 'food-recipes') => {
  */
 export const deleteFromCloudinary = async (publicId) => {
   try {
-    const result = await cloudinary.uploader.destroy(publicId);
+    console.log('Deleting from Cloudinary, Public ID:', publicId);
+
+    if (!publicId) {
+      console.log('No public ID provided, skipping deletion');
+      return { result: 'skipped' };
+    }
+
+    const result = await cloudinary.uploader.destroy(publicId, {
+      resource_type: 'image'
+    });
+
     console.log('Cloudinary delete result:', result);
+
+    if (result.result === 'not found') {
+      console.log('Image not found in Cloudinary (might be already deleted)');
+    }
+
     return result;
   } catch (error) {
-    console.error('Cloudinary delete error:', error);
-    throw error;
+    console.error('Cloudinary delete error:', error.message);
+    // Don't throw error, just log it
+    return { result: 'error', message: error.message };
   }
 };
 

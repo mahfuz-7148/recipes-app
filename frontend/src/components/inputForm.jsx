@@ -23,7 +23,7 @@ export const InputForm = ({ setIsOpen }) => {
     try {
       const endpoint = isSignUp ? "signUp" : "login";
 
-      const response = await axios.post(`https://recipes-app-8kbz.vercel.app/${endpoint}`, {
+      const response = await axios.post(`http://localhost:5000/${endpoint}`, {
         ...(isSignUp && { name }),
         email,
         password
