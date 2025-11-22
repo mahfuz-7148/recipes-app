@@ -16,7 +16,7 @@ export const EditRecipe = () => {
     const getData = async () => {
       const token = localStorage.getItem("token")
 
-      await axios.get(`https://recipes-app-8kbz.vercel.app/recipe/${id}`, {
+      await axios.get(`http://localhost:5000/recipe/${id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -79,7 +79,7 @@ export const EditRecipe = () => {
     }
 
     try {
-      await axios.put(`https://recipes-app-8kbz.vercel.app/recipe/${id}`, formData, {
+      await axios.put(`http://localhost:5000/recipe/${id}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${token}`
