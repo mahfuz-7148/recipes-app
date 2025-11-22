@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router';
-import { Menu, X, ChefHat, Heart, BookOpen, LogIn, LogOut, User } from 'lucide-react';
+import { Menu, X, ChefHat, Heart, BookOpen, LogIn, LogOut, User, Settings, UserCircle2 } from 'lucide-react';
 import { InputForm } from './inputForm.jsx';
 import { Modal } from './modal.jsx';
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const profileMenuRef = useRef(null);
   const navigate = useNavigate();
 
   // সরাসরি localStorage থেকে পড়ুন
@@ -18,7 +20,9 @@ export const Navbar = () => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    setShowProfileMenu(false);
     navigate('/');
+    window.location.reload(); // Refresh to update state
   };
 
   const checkLogin = () => {
@@ -29,11 +33,23 @@ export const Navbar = () => {
     }
   };
 
+  // Get user initials for avatar
+  const getUserInitials = () => {
+    if (user?.name) {
+      return user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    }
+    if (user?.email) {
+      return user.email[0].toUpperCase();
+    }
+    return 'U';
+  };
+
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
+            {/* Logo */}
             <NavLink to="/" className="flex items-center gap-2 group">
               <div className="bg-gradient-to-br from-emerald-500 to-teal-600 p-2 rounded-xl group-hover:scale-110 transition-transform duration-300 shadow-lg">
                 <ChefHat className="w-6 h-6 text-white" />
@@ -43,6 +59,7 @@ export const Navbar = () => {
               </span>
             </NavLink>
 
+            {/* Desktop Menu */}
             <ul className="hidden md:flex items-center gap-1">
               <li>
                 <NavLink
@@ -87,26 +104,113 @@ export const Navbar = () => {
               </li>
             </ul>
 
+            {/* Desktop Auth Section */}
             <div className="hidden md:flex items-center gap-3">
-              {user?.email && (
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg">
-                  <User className="w-4 h-4 text-gray-600" />
-                  <span className="text-sm text-gray-700 font-medium">{user.email}</span>
+              {isLogin ? (
+                <div
+                  className="relative"
+                  ref={profileMenuRef}
+                  onMouseEnter={() => setShowProfileMenu(true)}
+                  onMouseLeave={() => setShowProfileMenu(false)}
+                >
+                  {/* Profile Button */}
+                  <button
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 transition-all duration-200 group"
+                  >
+                    {/* Profile Photo or Avatar */}
+                    <div className="relative">
+                      {user?.profilePhoto ? (
+                        <img
+                          src={user.profilePhoto}
+                          alt={user.name || 'User'}
+                          className="w-9 h-9 rounded-full object-cover border-2 border-emerald-500 group-hover:border-emerald-600 transition-colors"
+                        />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-semibold text-sm border-2 border-emerald-500 group-hover:border-emerald-600 transition-colors">
+                          {getUserInitials()}
+                        </div>
+                      )}
+                      <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                    </div>
+
+                    {/* User Info */}
+                    <div className="text-left">
+                      <p className="text-sm font-semibold text-gray-900 leading-tight">
+                        {user?.name || 'User'}
+                      </p>
+                      <p className="text-xs text-gray-500 leading-tight">
+                        {user?.email?.length > 20 ? user.email.substring(0, 20) + '...' : user?.email}
+                      </p>
+                    </div>
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {showProfileMenu && (
+                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                      {/* User Info Section */}
+                      <div className="px-4 py-3 border-b border-gray-100">
+                        <div className="flex items-center gap-3">
+                          {user?.profilePhoto ? (
+                            <img
+                              src={user.profilePhoto}
+                              alt={user.name || 'User'}
+                              className="w-12 h-12 rounded-full object-cover border-2 border-emerald-500"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-lg">
+                              {getUserInitials()}
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-900 truncate">
+                              {user?.name || 'User'}
+                            </p>
+                            <p className="text-xs text-gray-500 truncate">
+                              {user?.email}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Menu Items */}
+                      <div className="py-2">
+                        <button
+                          onClick={() => {
+                            // Add profile settings route if needed
+                            setShowProfileMenu(false);
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
+                        >
+                          <Settings className="w-4 h-4" />
+                          Settings
+                        </button>
+                      </div>
+
+                      {/* Logout Button */}
+                      <div className="border-t border-gray-100 pt-2">
+                        <button
+                          onClick={handleLogout}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Logout
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
+              ) : (
+                <button
+                  onClick={() => setIsOpen(true)}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg hover:shadow-xl"
+                >
+                  <LogIn className="w-4 h-4" />
+                  Login
+                </button>
               )}
-              <button
-                onClick={checkLogin}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 ${
-                  isLogin
-                    ? 'bg-red-500 text-white shadow-lg hover:shadow-xl hover:bg-red-600'
-                    : 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg hover:shadow-xl'
-                }`}
-              >
-                {isLogin ? <LogOut className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
-                {isLogin ? "Logout" : "Login"}
-              </button>
             </div>
 
+            {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenu(!mobileMenu)}
               className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -115,6 +219,7 @@ export const Navbar = () => {
             </button>
           </div>
 
+          {/* Mobile Menu */}
           {mobileMenu && (
             <div className="md:hidden py-4 border-t border-gray-200">
               <ul className="space-y-2">
@@ -168,27 +273,57 @@ export const Navbar = () => {
                 </li>
               </ul>
 
+              {/* Mobile Auth Section */}
               <div className="mt-4 pt-4 border-t border-gray-200 space-y-3">
-                {user?.email && (
-                  <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
-                    <User className="w-4 h-4 text-gray-600" />
-                    <span className="text-sm text-gray-700 font-medium">{user.email}</span>
-                  </div>
+                {isLogin ? (
+                  <>
+                    {/* Mobile Profile Info */}
+                    <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg">
+                      {user?.profilePhoto ? (
+                        <img
+                          src={user.profilePhoto}
+                          alt={user.name || 'User'}
+                          className="w-12 h-12 rounded-full object-cover border-2 border-emerald-500"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-lg">
+                          {getUserInitials()}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">
+                          {user?.name || 'User'}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate">
+                          {user?.email}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Mobile Logout Button */}
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setMobileMenu(false);
+                      }}
+                      className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-lg font-semibold transition-all bg-red-500 text-white shadow-lg hover:bg-red-600"
+                    >
+                      <LogOut className="w-5 h-5" />
+                      Logout
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setIsOpen(true);
+                      setMobileMenu(false);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-lg font-semibold transition-all bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg"
+                  >
+                    <LogIn className="w-5 h-5" />
+                    Login
+                  </button>
                 )}
-                <button
-                  onClick={() => {
-                    checkLogin();
-                    setMobileMenu(false);
-                  }}
-                  className={`w-full flex items-center justify-center gap-2 px-5 py-3 rounded-lg font-semibold transition-all ${
-                    isLogin
-                      ? 'bg-red-500 text-white shadow-lg hover:bg-red-600'
-                      : 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg'
-                  }`}
-                >
-                  {isLogin ? <LogOut className="w-5 h-5" /> : <LogIn className="w-5 h-5" />}
-                  {isLogin ? "Logout" : "Login"}
-                </button>
               </div>
             </div>
           )}
