@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router';
-import { Menu, X, ChefHat, Heart, BookOpen, LogIn, LogOut, User, Settings, UserCircle2 } from 'lucide-react';
+import { Menu, X, ChefHat, Heart, BookOpen, LogIn, LogOut, Settings } from 'lucide-react';
 import { InputForm } from './inputForm.jsx';
 import { Modal } from './modal.jsx';
 
@@ -8,7 +8,9 @@ export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [mobileProfileMenuOpen, setMobileProfileMenuOpen] = useState(false); // Separate state for mobile
   const profileMenuRef = useRef(null);
+  const mobileMenuRef = useRef(null);
   const navigate = useNavigate();
 
   // সরাসরি localStorage থেকে পড়ুন
@@ -16,6 +18,34 @@ export const Navbar = () => {
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
   const isLogin = !!token;
+
+  // Close dropdown when clicking outside (Desktop)
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target)) {
+        setMobileMenu(false);
+        setMobileProfileMenuOpen(false); // Also close mobile dropdown
+      }
+    };
+
+    if (mobileMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [mobileMenu]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -113,10 +143,8 @@ export const Navbar = () => {
                   onMouseEnter={() => setShowProfileMenu(true)}
                   onMouseLeave={() => setShowProfileMenu(false)}
                 >
-                  {/* Profile Button */}
-                  <button
-                    className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 transition-all duration-200 group"
-                  >
+                  {/* Profile Button - Desktop: Simple Hover */}
+                  <div className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 transition-all duration-200 group cursor-pointer">
                     {/* Profile Photo or Avatar */}
                     <div className="relative">
                       {user?.profilePhoto ? (
@@ -142,7 +170,7 @@ export const Navbar = () => {
                         {user?.email?.length > 20 ? user.email.substring(0, 20) + '...' : user?.email}
                       </p>
                     </div>
-                  </button>
+                  </div>
 
                   {/* Dropdown Menu */}
                   {showProfileMenu && (
@@ -221,12 +249,15 @@ export const Navbar = () => {
 
           {/* Mobile Menu */}
           {mobileMenu && (
-            <div className="md:hidden py-4 border-t border-gray-200">
+            <div ref={mobileMenuRef} className="md:hidden py-4 border-t border-gray-200">
               <ul className="space-y-2">
                 <li>
                   <NavLink
                     to="/"
-                    onClick={() => setMobileMenu(false)}
+                    onClick={() => {
+                      setMobileMenu(false);
+                      setMobileProfileMenuOpen(false);
+                    }}
                     className={({ isActive }) =>
                       `flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
                         isActive ? 'bg-emerald-100 text-emerald-700' : 'text-gray-600 hover:bg-gray-100'
@@ -239,11 +270,20 @@ export const Navbar = () => {
                 </li>
 
                 <li onClick={() => {
-                  if (!isLogin) setIsOpen(true);
-                  setMobileMenu(false);
+                  if (!isLogin) {
+                    setIsOpen(true);
+                    setMobileMenu(false);
+                    setMobileProfileMenuOpen(false);
+                  }
                 }}>
                   <NavLink
                     to={isLogin ? "/myRecipe" : "/"}
+                    onClick={() => {
+                      if (isLogin) {
+                        setMobileMenu(false);
+                        setMobileProfileMenuOpen(false);
+                      }
+                    }}
                     className={({ isActive }) =>
                       `flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
                         isActive && isLogin ? 'bg-emerald-100 text-emerald-700' : 'text-gray-600 hover:bg-gray-100'
@@ -256,11 +296,20 @@ export const Navbar = () => {
                 </li>
 
                 <li onClick={() => {
-                  if (!isLogin) setIsOpen(true);
-                  setMobileMenu(false);
+                  if (!isLogin) {
+                    setIsOpen(true);
+                    setMobileMenu(false);
+                    setMobileProfileMenuOpen(false);
+                  }
                 }}>
                   <NavLink
                     to={isLogin ? "/favRecipe" : "/"}
+                    onClick={() => {
+                      if (isLogin) {
+                        setMobileMenu(false);
+                        setMobileProfileMenuOpen(false);
+                      }
+                    }}
                     className={({ isActive }) =>
                       `flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
                         isActive && isLogin ? 'bg-emerald-100 text-emerald-700' : 'text-gray-600 hover:bg-gray-100'
@@ -277,40 +326,74 @@ export const Navbar = () => {
               <div className="mt-4 pt-4 border-t border-gray-200 space-y-3">
                 {isLogin ? (
                   <>
-                    {/* Mobile Profile Info */}
-                    <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg">
-                      {user?.profilePhoto ? (
-                        <img
-                          src={user.profilePhoto}
-                          alt={user.name || 'User'}
-                          className="w-12 h-12 rounded-full object-cover border-2 border-emerald-500"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-lg">
-                          {getUserInitials()}
+                    {/* Mobile Profile Button with Dropdown */}
+                    <div className="relative">
+                      <button
+                        onClick={() => {
+                          console.log('Mobile arrow clicked! Current:', mobileProfileMenuOpen);
+                          setMobileProfileMenuOpen(!mobileProfileMenuOpen);
+                          console.log('Mobile new state:', !mobileProfileMenuOpen);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg hover:from-emerald-100 hover:to-teal-100 transition-all"
+                      >
+                        {user?.profilePhoto ? (
+                          <img
+                            src={user.profilePhoto}
+                            alt={user.name || 'User'}
+                            className="w-12 h-12 rounded-full object-cover border-2 border-emerald-500"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-lg">
+                            {getUserInitials()}
+                          </div>
+                        )}
+                        <div className="flex-1 text-left min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">
+                            {user?.name || 'User'}
+                          </p>
+                          <p className="text-xs text-gray-500 truncate">
+                            {user?.email}
+                          </p>
+                        </div>
+                        <svg
+                          className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${mobileProfileMenuOpen ? 'rotate-180' : ''}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+
+                      {/* Mobile Dropdown Menu */}
+                      {mobileProfileMenuOpen && (
+                        <div className="mt-2 bg-white rounded-lg border border-gray-200 shadow-lg overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                          <button
+                            onClick={() => {
+                              // Add settings route
+                              setMobileProfileMenuOpen(false);
+                              setMobileMenu(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-emerald-50 transition-colors"
+                          >
+                            <Settings className="w-4 h-4" />
+                            Settings
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              handleLogout();
+                              setMobileMenu(false);
+                              setMobileProfileMenuOpen(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-gray-100"
+                          >
+                            <LogOut className="w-4 h-4" />
+                            Logout
+                          </button>
                         </div>
                       )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 truncate">
-                          {user?.name || 'User'}
-                        </p>
-                        <p className="text-xs text-gray-500 truncate">
-                          {user?.email}
-                        </p>
-                      </div>
                     </div>
-
-                    {/* Mobile Logout Button */}
-                    <button
-                      onClick={() => {
-                        handleLogout();
-                        setMobileMenu(false);
-                      }}
-                      className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-lg font-semibold transition-all bg-red-500 text-white shadow-lg hover:bg-red-600"
-                    >
-                      <LogOut className="w-5 h-5" />
-                      Logout
-                    </button>
                   </>
                 ) : (
                   <button
